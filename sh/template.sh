@@ -19,7 +19,13 @@ trap "rm -f $tmp.?; exit 1" 0 1 2 3 13 15
 
 ################################################################################
 #### USAGE AND ERRORS
-cmd=`basename $0`
+COMMAND=`basename $0`
+# Load basic functions; primarily messaging functions
+# Rename file name here to match actual functions
+source "`dirname $0`/template-functions"
+
+# replace log file with another value if you want
+LOGFILE=LOG_${COMMAND}_`tstamp`.log
 
 usage() {
    echo "Usage: $cmd [ARGS..]"
@@ -29,31 +35,12 @@ print_help() {
   echo "$HELP"
 }
 
-error() {
-   echo "$cmd: ERROR $1" 1>&2
-   usage
-   exit 1
-}
-
-warning() {
-    echo "$cmd: WARNING $1" 1>&2
-}
-
-
-################################################################################
-### LOGGING
-logfile=${LOGFILE:LOG_${cmd}}.log
-
-log() {
-    echo "`date +%Y-%m-%dT%H:%M:%S` [$cmd] $1" >> $LOG
-}
-
 ################################################################################
 ### OPTIONS
 while getopts "h" opt; do
   case $opt in
     h)
-      usage 
+      usage
       print_help
       exit 1
       ;;

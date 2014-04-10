@@ -1,0 +1,172 @@
+# ISO date format YYYY-mm-ddTHH:MM:SS+-OFFSET
+iso_date() {
+  date +%FT%T%z
+}
+
+tstamp() {
+  date +%Y%m%dT%H%M%S
+}
+
+format_code_message() {
+  fm_code=$1
+  fm_file="$2"
+  printf "%-50s %s\n" "$fm_code" "$fm_file"
+}
+
+print_message() {
+  pm_msg_type=$1
+  pm_msg=$2
+  pm_time=`date +%Y-%m-%dT%H:%M:%S`
+  if [ -n "$CURR_DIR" ]; then
+    # echo "`printf "%-23s" "[$COMMAND]"` `printf "%-12s %-25s %s" $pm_msg_type "[$CURR_DIR]" "$pm_msg"`"
+    echo "`printf "%-23s %-20s" "[$COMMAND]" $pm_time` `printf "%-12s %-30s %s" $pm_msg_type "[$CURR_DIR]" "$pm_msg"`"
+  else
+    echo "`printf "%-23s %-20s" "[$COMMAND]" $pm_time` `printf "%-43s %s" $pm_msg_type "$pm_msg"`"
+  fi
+}
+
+message() {
+  print_message INFO "$1"
+}
+
+error_no_exit() {
+  print_message ERROR "$1"
+}
+
+coded_error() {
+  cerr_code=$1
+  cerr_file="$2"
+  error_no_exit "`format_code_message $cerr_code "$cerr_file"`"
+}
+
+error() {
+  echo "$COMMAND: ERROR   - $1" 1>&2
+  # if there's a usage function; print usage
+  if type usage | grep "function" >/dev/null 2>&1 ; then
+    echo ""
+    usage
+  fi
+  exit 1
+}
+
+invalid() {
+  print_message INVALID "$1"
+}
+
+valid() {
+  print_message VALID "$1"
+}
+
+fail() {
+  print_message FAIL "$1"
+  exit 2
+}
+
+success() {
+  print_message SUCCESS "$1"
+}
+
+warning() {
+  print_message WARNING "$1"
+}
+
+### LOGGING
+# the default log file
+LOGFILE=LOG_${COMMAND}.log
+
+log() {
+  message "$1" >> $LOGFILE
+}
+
+error_file=ERROR_${COMMAND}.log
+
+log_error() {
+  error_no_exit "$1" >> $error_file
+}
+
+log_invalid() {
+  invalid "$1" >> $LOGFILE
+}
+
+log_valid() {
+  valid "$1" >> $LOGFILE
+}
+
+log_warning() {
+  warning "$1" >> $LOGFILE
+}
+
+log_message() {
+  message "$1" >> $LOGFILE
+}
+
+# Report the current count of a file iteration.
+# The arguments are:
+#
+#     Usage: report_count COUNT TOTAL INTERVAL [FILE]
+#
+#   COUNT     the count/index of the current file
+#   TOTAL     the total number of files
+#   INTERVAL  how often to report the count, an interval of 0 (zero)
+#             will force the count to be printed
+#   FILE      optional file name to print with count
+#
+# Output is printed as an INFO message and includes a time stamp.
+report_count() {
+  rc_count=$1
+  rc_total=$2
+  rc_width=`echo $rc_total | wc -c`
+  rc_width=$(( $rc_width - 1 ))
+  rc_mark=`printf "%${rc_width}d/%d" $rc_count $rc_total`
+  rc_interval=$3
+  rc_file=$4
+  if [ $rc_interval -eq 0 ]; then
+    rc_time=`date +%Y-%m-%dT%H:%M:%S`
+    if [ -n "$rc_file" ]; then
+      message "$rc_mark  `printf "%-40s" $rc_file` $rc_time"
+    else
+      message "$rc_mark  $rc_time"
+    fi
+  elif [ "$(( $rc_count % $rc_interval ))" -eq 0 ]; then
+    rc_time=`date +%Y-%m-%dT%H:%M:%S`
+    message "$rc_mark  $rc_time"
+  fi
+}
+
+file_exists() {
+  fe_file=$1
+  fe_name=$2
+  if [ -z "$fe_file" ]; then
+    error_no_exit "Please provide a ${fe_name}"
+    return 1
+  elif [ ! -f $fe_file ]; then
+    error_no_exit "${fe_name} not found: $fe_file"
+    return 1
+  fi
+  return 0
+
+}
+
+dir_exists() {
+  de_dir="$1"
+  de_name="$2"
+  if [ -z "$de_dir" ]; then
+    error_no_exit "Please provide a ${de_name}"
+    return 1
+  elif [ ! -d "$de_dir" ]; then
+    error_no_exit "${de_name} not found: $de_dir"
+    return 1
+  fi
+  return 0
+}
+
+is_a_content_line() {
+  iacl_line=$1
+  if echo "$iacl_line" | egrep "^\s*$" >/dev/null ; then
+    return 1
+  elif echo "$iacl_line" | egrep "^\s*#" >/dev/null ; then
+    return 1
+  else
+    return 0
+  fi
+}
