@@ -24,6 +24,9 @@ COMMAND=`basename $0`
 # Rename file name here to match actual functions
 source "`dirname $0`/template-functions"
 
+# Note that LOGFILE is used by functions for log commands: log_message,
+# log_warning, log_error, etc.
+#
 # replace log file with another value if you want
 LOGFILE=LOG_${COMMAND}_`tstamp`.log
 
