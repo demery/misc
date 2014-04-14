@@ -1,3 +1,7 @@
+#
+# Basic common functions; you should rename this file if you want to use it in
+# your app.
+
 # ISO date format YYYY-mm-ddTHH:MM:SS+-OFFSET
 iso_date() {
   date +%FT%T%z
