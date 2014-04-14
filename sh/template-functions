@@ -44,7 +44,7 @@ coded_error() {
 }
 
 error() {
-  echo "$COMMAND: ERROR   - $1" 1>&2
+  print_message ERROR "$1" 1>&2
   # if there's a usage function; print usage
   if type usage | grep "function" >/dev/null 2>&1 ; then
     echo ""
